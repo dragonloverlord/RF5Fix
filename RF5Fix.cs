@@ -386,8 +386,12 @@ namespace RF5Fix
                     var InDoor = __instance.GetSetting(Define.TrackinCameraType.InDoor);
                     var OutDoor = __instance.GetSetting(Define.TrackinCameraType.OutDoor);
                     var Dangeon = __instance.GetSetting(Define.TrackinCameraType.Dangeon);
+                    var Reserve1 = __instance.GetSetting(Define.TrackinCameraType.Reserve1);
+                    var Reserve2 = __instance.GetSetting(Define.TrackinCameraType.Reserve2);
+                    var Reserve3 = __instance.GetSetting(Define.TrackinCameraType.Reserve3);
+                    var Reserve4 = __instance.GetSetting(Define.TrackinCameraType.Reserve4);
 
-                    Log.LogInfo($"Tracking Camera. Current InDoor FOV = {InDoor.minFov}. Current OutDoor FOV = {OutDoor.minFov}. Current Dangeon FOV = {Dangeon.minFov}");
+                    Log.LogInfo($"Tracking Camera. Current InDoor FOV = {InDoor.minFov}. Current OutDoor FOV = {OutDoor.minFov}. Current Dangeon FOV = {Dangeon.minFov}. Current Reserve1 FOV = {Reserve1.minFov}. Current Reserve2 FOV = {Reserve2.minFov}. Current Reserve3 FOV = {Reserve3.minFov}. Current Reserve4 FOV = {Reserve4.minFov}.");
 
                     // Vert+ FOV
                     if (NewAspectRatio < DefaultAspectRatio)
@@ -395,10 +399,18 @@ namespace RF5Fix
                         float newInDoorFOV = Mathf.Floor(Mathf.Atan(Mathf.Tan(InDoor.minFov * Mathf.PI / 360) / NewAspectRatio * DefaultAspectRatio) * 360 / Mathf.PI);
                         float newOutDoorFOV = Mathf.Floor(Mathf.Atan(Mathf.Tan(OutDoor.minFov * Mathf.PI / 360) / NewAspectRatio * DefaultAspectRatio) * 360 / Mathf.PI);
                         float newDangeonFOV = Mathf.Floor(Mathf.Atan(Mathf.Tan(Dangeon.minFov * Mathf.PI / 360) / NewAspectRatio * DefaultAspectRatio) * 360 / Mathf.PI);
+                        float newReserve1FOV = Mathf.Floor(Mathf.Atan(Mathf.Tan(Reserve1.minFov * Mathf.PI / 360) / NewAspectRatio * DefaultAspectRatio) * 360 / Mathf.PI);
+                        float newReserve2FOV = Mathf.Floor(Mathf.Atan(Mathf.Tan(Reserve2.minFov * Mathf.PI / 360) / NewAspectRatio * DefaultAspectRatio) * 360 / Mathf.PI);
+                        float newReserve3FOV = Mathf.Floor(Mathf.Atan(Mathf.Tan(Reserve3.minFov * Mathf.PI / 360) / NewAspectRatio * DefaultAspectRatio) * 360 / Mathf.PI);
+                        float newReserve4FOV = Mathf.Floor(Mathf.Atan(Mathf.Tan(Reserve4.minFov * Mathf.PI / 360) / NewAspectRatio * DefaultAspectRatio) * 360 / Mathf.PI);
 
                         InDoor.minFov = newInDoorFOV;
                         OutDoor.minFov = newOutDoorFOV;
                         Dangeon.minFov = newDangeonFOV;
+                        Reserve1.minFov = newReserve1FOV;
+                        Reserve2.minFov = newReserve2FOV;
+                        Reserve3.minFov = newReserve3FOV;
+                        Reserve4.minFov = newReserve4FOV;
 
                     }
                     // Add FOV
@@ -407,9 +419,13 @@ namespace RF5Fix
                         InDoor.minFov += fAdditionalFOV.Value;
                         OutDoor.minFov += fAdditionalFOV.Value;
                         Dangeon.minFov += fAdditionalFOV.Value;
+                        Reserve1.minFov += fAdditionalFOV.Value;
+                        Reserve2.minFov += fAdditionalFOV.Value;
+                        Reserve3.minFov += fAdditionalFOV.Value;
+                        Reserve4.minFov += fAdditionalFOV.Value;
                     }
 
-                    Log.LogInfo($"Tracking Camera: New InDoor FOV = {InDoor.minFov}. New OutDoor FOV = {OutDoor.minFov}. New Dangeon FOV = {Dangeon.minFov}");
+                    Log.LogInfo($"Tracking Camera: New InDoor FOV = {InDoor.minFov}. New OutDoor FOV = {OutDoor.minFov}. New Dangeon FOV = {Dangeon.minFov}. New Reserve1 FOV = {Reserve1.minFov}. New Reserve2 FOV = {Reserve2.minFov}. New Reserve3 FOV = {Reserve3.minFov}. New Reserve4 FOV = {Reserve4.minFov}.");
                     trackingFOVHasRun = true;
                 }
             }

@@ -24,7 +24,7 @@ namespace RF5Fix
         public static ConfigEntry<bool> bCampRenderTextureFix;
         public static ConfigEntry<bool> bDisableCrossHatching;
         public static ConfigEntry<bool> bFOVAdjust;
-        public static ConfigEntry<float> fAdditionalFOV;
+        public static ConfigEntry<float> fFOVAdjust;
         public static ConfigEntry<float> fUpdateRate;
         public static ConfigEntry<bool> bMouseSensitivity;
         public static ConfigEntry<int> iMouseSensitivity;
@@ -82,14 +82,14 @@ namespace RF5Fix
             // Game Overrides
             bFOVAdjust = Config.Bind("FOV Adjustment",
                                 "FOVAdjustment",
-                                true, // True by default to enable Vert+ for narrow aspect ratios.
+                                false, // True by default to enable Vert+ for narrow aspect ratios.
                                 "Set to true to enable adjustment of the FOV. \nIt will also adjust the FOV to be Vert+ if your aspect ratio is narrower than 16:9.");
 
-            fAdditionalFOV = Config.Bind("FOV Adjustment",
-                                "AdditionalFOV.Value",
-                                (float)0f,
-                                new ConfigDescription("Set additional FOV in degrees. This does not adjust FOV in cutscenes.",
-                                new AcceptableValueRange<float>(0f, 180f)));
+            fFOVAdjust = Config.Bind("FOV Adjustment",
+                                "FOV.Value",
+                                (float)50f,
+                                new ConfigDescription("Set desired FOV.", 
+                                new AcceptableValueRange<float>(1f,180f)));
 
             bMouseSensitivity = Config.Bind("Mouse Sensitivity",
                                 "MouseSensitivity.Override",
@@ -368,126 +368,15 @@ namespace RF5Fix
         [HarmonyPatch]
         public class FOVPatch
         {
-            public static float NewAspectRatio = (float)Screen.width / Screen.height;
-            public static float DefaultAspectRatio = (float)16 / 9;
-            
-            public static bool farmFOVHasRun = false;
-            public static bool trackingFOVHasRun = false;
-
-            // Adjust tracking camera FOV
-            // Indoor, outdoor, dungeon
-            [HarmonyPatch(typeof(PlayerTrackingCamera), nameof(PlayerTrackingCamera.Start))]
+            // Player Tracking Camera FOV
+            //[HarmonyPatch(typeof(PlayerTrackingCamera), nameof(PlayerTrackingCamera.GetSetting), new Type[] { typeof(Define.TrackinCameraType) })]
+            [HarmonyPatch(typeof(PlayerTrackingCamera), nameof(PlayerTrackingCamera.GetSetting), new Type[] { })]
             [HarmonyPostfix]
-            public static void TrackingFOV(PlayerTrackingCamera __instance)
+            public static void ChangePlayerTrackingFOV(PlayerTrackingCamera __instance)
             {
-                // Only run this once
-                if (!trackingFOVHasRun)
-                {
-                    var InDoor = __instance.GetSetting(Define.TrackinCameraType.InDoor);
-                    var OutDoor = __instance.GetSetting(Define.TrackinCameraType.OutDoor);
-                    var Dangeon = __instance.GetSetting(Define.TrackinCameraType.Dangeon);
-                    var Reserve1 = __instance.GetSetting(Define.TrackinCameraType.Reserve1);
-                    var Reserve2 = __instance.GetSetting(Define.TrackinCameraType.Reserve2);
-                    var Reserve3 = __instance.GetSetting(Define.TrackinCameraType.Reserve3);
-                    var Reserve4 = __instance.GetSetting(Define.TrackinCameraType.Reserve4);
-
-                    Log.LogInfo($"Tracking Camera. Current InDoor FOV = {InDoor.minFov}. Current OutDoor FOV = {OutDoor.minFov}. Current Dangeon FOV = {Dangeon.minFov}. Current Reserve1 FOV = {Reserve1.minFov}. Current Reserve2 FOV = {Reserve2.minFov}. Current Reserve3 FOV = {Reserve3.minFov}. Current Reserve4 FOV = {Reserve4.minFov}.");
-
-                    // Vert+ FOV
-                    if (NewAspectRatio < DefaultAspectRatio)
-                    {
-                        float newInDoorFOV = Mathf.Floor(Mathf.Atan(Mathf.Tan(InDoor.minFov * Mathf.PI / 360) / NewAspectRatio * DefaultAspectRatio) * 360 / Mathf.PI);
-                        float newOutDoorFOV = Mathf.Floor(Mathf.Atan(Mathf.Tan(OutDoor.minFov * Mathf.PI / 360) / NewAspectRatio * DefaultAspectRatio) * 360 / Mathf.PI);
-                        float newDangeonFOV = Mathf.Floor(Mathf.Atan(Mathf.Tan(Dangeon.minFov * Mathf.PI / 360) / NewAspectRatio * DefaultAspectRatio) * 360 / Mathf.PI);
-                        float newReserve1FOV = Mathf.Floor(Mathf.Atan(Mathf.Tan(Reserve1.minFov * Mathf.PI / 360) / NewAspectRatio * DefaultAspectRatio) * 360 / Mathf.PI);
-                        float newReserve2FOV = Mathf.Floor(Mathf.Atan(Mathf.Tan(Reserve2.minFov * Mathf.PI / 360) / NewAspectRatio * DefaultAspectRatio) * 360 / Mathf.PI);
-                        float newReserve3FOV = Mathf.Floor(Mathf.Atan(Mathf.Tan(Reserve3.minFov * Mathf.PI / 360) / NewAspectRatio * DefaultAspectRatio) * 360 / Mathf.PI);
-                        float newReserve4FOV = Mathf.Floor(Mathf.Atan(Mathf.Tan(Reserve4.minFov * Mathf.PI / 360) / NewAspectRatio * DefaultAspectRatio) * 360 / Mathf.PI);
-
-                        InDoor.minFov = newInDoorFOV;
-                        OutDoor.minFov = newOutDoorFOV;
-                        Dangeon.minFov = newDangeonFOV;
-                        Reserve1.minFov = newReserve1FOV;
-                        Reserve2.minFov = newReserve2FOV;
-                        Reserve3.minFov = newReserve3FOV;
-                        Reserve4.minFov = newReserve4FOV;
-
-                    }
-                    // Add FOV
-                    if (fAdditionalFOV.Value > 0f)
-                    {
-                        InDoor.minFov += fAdditionalFOV.Value;
-                        OutDoor.minFov += fAdditionalFOV.Value;
-                        Dangeon.minFov += fAdditionalFOV.Value;
-                        Reserve1.minFov += fAdditionalFOV.Value;
-                        Reserve2.minFov += fAdditionalFOV.Value;
-                        Reserve3.minFov += fAdditionalFOV.Value;
-                        Reserve4.minFov += fAdditionalFOV.Value;
-                    }
-
-                    Log.LogInfo($"Tracking Camera: New InDoor FOV = {InDoor.minFov}. New OutDoor FOV = {OutDoor.minFov}. New Dangeon FOV = {Dangeon.minFov}. New Reserve1 FOV = {Reserve1.minFov}. New Reserve2 FOV = {Reserve2.minFov}. New Reserve3 FOV = {Reserve3.minFov}. New Reserve4 FOV = {Reserve4.minFov}.");
-                    trackingFOVHasRun = true;
-                }
-            }
-
-
-            // Farming FOV
-            [HarmonyPatch(typeof(PlayerFarmingCamera), nameof(PlayerFarmingCamera.Awake))]
-            [HarmonyPrefix]
-            public static void FarmingFOV(PlayerFarmingCamera __instance)
-            {
-                // Only run this once
-                if (!farmFOVHasRun)
-                {
-                    var battleInst = BattleConst.Instance;
-                    Log.LogInfo($"PlayerFarmingCamera: Current FOV = {battleInst.FarmCamera_FOV}.");
-
-                    // Vert+ FOV
-                    if (NewAspectRatio < DefaultAspectRatio)
-                    {
-                        float newFOV = Mathf.Floor(Mathf.Atan(Mathf.Tan(battleInst.FarmCamera_FOV * Mathf.PI / 360) / NewAspectRatio * DefaultAspectRatio) * 360 / Mathf.PI);
-                        battleInst.FarmCamera_FOV = newFOV;
-
-                    }
-                    // Add FOV
-                    if (fAdditionalFOV.Value > 0f)
-                    {
-                        battleInst.FarmCamera_FOV += fAdditionalFOV.Value;
-                    }
-
-                    Log.LogInfo($"PlayerFarmingCamera: New FOV = {battleInst.FarmCamera_FOV}.");
-                    farmFOVHasRun = true;
-                }
-            }
-
-            // FOV adjustment for every camera
-            // Does not effect tracking camera and farm camera, maybe more. They are forced to a specific FOV
-            // Adjust to Vert+ at narrower than 16:9
-            [HarmonyPatch(typeof(Cinemachine.CinemachineVirtualCamera), nameof(Cinemachine.CinemachineVirtualCamera.OnEnable))]
-            [HarmonyPostfix]
-            public static void GlobalFOV(Cinemachine.CinemachineVirtualCamera __instance)
-            {
-                var currLens = __instance.m_Lens;
-                var currFOV = currLens.FieldOfView;
-
-                Log.LogInfo($"Cinemachine VCam: Current camera name = {__instance.name}.");
-                Log.LogInfo($"Cinemachine VCam: Current camera FOV = {currFOV}.");
-
-                // Vert+ FOV
-                if (NewAspectRatio < DefaultAspectRatio)
-                {
-                    float newFOV = Mathf.Floor(Mathf.Atan(Mathf.Tan(currFOV * Mathf.PI / 360) / NewAspectRatio * DefaultAspectRatio) * 360 / Mathf.PI);
-                    currLens.FieldOfView = Mathf.Clamp(newFOV, 1f, 180f);
-                }
-                // Add FOV for everything but cutscenes
-                if (fAdditionalFOV.Value > 0f && __instance.name != "CMvcamCutBuffer" && __instance.name != "CMvcamShortPlay")
-                {
-                    currLens.FieldOfView += fAdditionalFOV.Value;
-                    Log.LogInfo($"Cinemachine VCam: Cam name = {__instance.name}. Added gameplay FOV = {fAdditionalFOV.Value}.");
-                }
-
-                __instance.m_Lens = currLens;
-                Log.LogInfo($"Cinemachine VCam: New camera FOV = {__instance.m_Lens.FieldOfView}.");
+                float FOV = fFOVAdjust.Value;
+                __instance.m_Setting.minFov = Mathf.Clamp(FOV, 1f, 180f);
+                //Log.LogInfo($"PlayerTrackingCamera FOV set to {__instance.m_Setting.minFov}");
             }
         }
 
